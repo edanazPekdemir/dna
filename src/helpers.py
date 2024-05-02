@@ -1,0 +1,131 @@
+from math import e
+from time import sleep
+import time
+from xml.dom.minidom import Element
+from selenium import webdriver
+from selenium.webdriver.common.by import By
+from selenium.webdriver.chrome.options import Options
+from webdriver_manager.chrome import ChromeDriverManager
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.common.action_chains import ActionChains
+from selenium.common.exceptions import TimeoutException, ElementClickInterceptedException
+from selenium.webdriver.common.keys import Keys
+import re
+
+from globals import PRICE_FIELD_XPATH
+from globals import (
+    BUY_BUTTON_XPATH,
+    TOTAL_BASKET_PRICE_XPATH
+)
+
+def button_click(driver, xpath, timeout=30):
+    try:
+        button = WebDriverWait(driver, timeout).until(
+            EC.presence_of_element_located((By.XPATH, xpath))
+        )
+        button.click()
+        print(f"Button click successful XPATH:{xpath}")
+    except ElementClickInterceptedException:
+        # If the click is intercepted, scroll the button into view and try again
+        print("Click intercepted, attempting to scroll element into view and retry")
+        driver.execute_script("arguments[0].scrollIntoView(true);", button)
+        time.sleep(1)  # Add a slight delay to ensure JS events are processed
+        button.click()
+        print(f"Button click successful XPATH:{xpath}")
+    except TimeoutException:
+        print(f"Timed out while clicking xpath : {xpath}")
+        exit(1)
+    except Exception as e:
+        print(f"An error occurred while clicking xpath : {xpath} error : {e}")
+        exit(1)
+
+def enter_url(driver, url):
+    print(f"Entering {url}")
+    driver.get(url)
+    driver.maximize_window()
+    sleep(1)
+
+def get_driver():
+    options = Options()
+    options.add_argument('--ignore-certificate-errors')
+    options.add_experimental_option('excludeSwitches', ['enable-logging'])
+    return webdriver.Chrome(ChromeDriverManager().install(), options=options)
+
+def get_price(product):
+    price_field = product.find_element(By.XPATH, PRICE_FIELD_XPATH)
+    cleaned_price = re.sub(r'[^\d]', '', price_field.text)
+    return int(cleaned_price)
+
+def get_products_displayed(driver, xpath):
+    sleep(5) # wait for products to load
+    return driver.find_elements(By.XPATH, xpath)
+
+def add_product_2_basket(product):
+    try:
+        sleep(1) # wait for products to load
+        button_click(product, BUY_BUTTON_XPATH)
+        sleep(1) # wait for products to load
+        print("product added to the basket")
+    except Exception as e:
+        print(f"An error occurred while adding product to basket: {e}")
+
+def get_basket_price(driver):
+    try:
+        price_field = WebDriverWait(driver, 30).until(
+            EC.presence_of_element_located((By.XPATH, TOTAL_BASKET_PRICE_XPATH))
+        )
+        price_str = price_field.text
+        cleaned_price = re.sub(r'[^\d]', '', price_str)
+        return int(cleaned_price)
+    except TimeoutException:
+        print(f"Timed out while waiting xpath : {TOTAL_BASKET_PRICE_XPATH}")
+        exit(1)
+    except Exception as e:
+        print(f"An error occurred : {e}")
+        exit(1)
+
+def select_branch(driver):
+
+    try:
+        WebDriverWait(driver, 10).until(
+            EC.presence_of_element_located((By.CSS_SELECTOR, ".deliveryContainer"))
+        )
+
+        # Find all delivery containers
+        delivery_containers = driver.find_elements(By.CSS_SELECTOR, ".deliveryContainer")
+
+        # Loop through each container and check if the delivery price is 'free'
+        for container in delivery_containers:
+            # Find the price span within this container
+            price_span = container.find_element(By.CSS_SELECTOR, ".deliveryPrice")
+
+            # Check if the delivery price text is 'free'
+            if price_span.text.lower() == 'free':
+                # If free, find the checkbox and click it
+                container.click()
+                print("Delivery method selected")
+                return
+    except Exception as e:
+        print(f"An error occurred while selecting delivery method: {e}")
+
+def select_payment(driver):
+    try:
+        WebDriverWait(driver, 10).until(
+            EC.presence_of_element_located((By.CSS_SELECTOR, ".paymentContainer"))
+        )
+
+        # Find all delivery containers
+        delivery_containers = driver.find_elements(By.CSS_SELECTOR, ".paymentContainer")
+        delivery_containers[1].click()
+        print("Payment method selected")
+    except Exception as e:
+        print(f"An error occurred while selecting payment method: {e}")
+
+def enter_text(driver, text, xpath):
+    textbox = driver.find_element(By.XPATH, xpath)
+    if textbox.get_attribute("value") != "":
+        textbox.clear()
+    textbox.send_keys(text) 
+    textbox.send_keys(Keys.ENTER) 
+
