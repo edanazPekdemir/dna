@@ -1,4 +1,5 @@
 from itertools import product
+import logging
 from time import sleep
 from helpers import (
     select_branch,
@@ -35,6 +36,8 @@ from globals import (
     FINISH_ORDER_BTN_XPATH
 )
 
+logger = logging.getLogger(__name__)
+
 def add_expensive_from_laptops(driver):
 
     button_click(driver, CAT_COMPUTERS_XPATH)
@@ -63,10 +66,10 @@ def confirm_basket(driver, price_expected):
     price = get_basket_price(driver)
 
     if(price != price_expected):
-        print("Wrong total price!")
+        logger.error("Wrong total price!")
         exit(1)
     
-    print("Product total prices are correct")
+    logger.info("Product total prices are correct")
     button_click(driver, CONFIRM_BASKET_BTN_XPATH)
     button_click(driver, BASKET_DO_NO_ADD_ANYTHING_XPATH)
     select_branch(driver)
@@ -75,7 +78,7 @@ def confirm_basket(driver, price_expected):
     sleep(5) # wait for continue button to be activated
     button_click(driver, PAYMENT_CONT_XPATH)
     button_click(driver, AVOID_PREMIUM_POPUP_XPATH)
-    enter_text(driver, "test@gmail.com", EMAIL_TEXT_BOX_XPATH)
+    enter_text(driver, "johndoe@gmail.com", EMAIL_TEXT_BOX_XPATH)
     sleep(2)
     enter_text(driver, "123456789", PHONE_TEXT_BOX_XPATH)
     #this line will create a real order on alza.cz
@@ -95,7 +98,7 @@ def main():
     tot_price = exp_price + cheapest_price
     
     confirm_basket(driver, tot_price)
-    print("Order placed successfully test service will be terminated in 10 seconds ")
+    logger.info("Order placed successfully test service will be terminated in 10 seconds ")
     sleep(10)
     driver.quit()
 
