@@ -45,7 +45,7 @@ Setting up a virtual environment for Python projects is recommended as it allows
 
 ### Check Installation
 
-7. **Verify All Dependencies**:
+4. **Verify All Dependencies**:
    - Ensure all installations are correctly done by checking the installed packages:
      ```bash
      pip list
@@ -53,7 +53,7 @@ Setting up a virtual environment for Python projects is recommended as it allows
 
 ### Update pip (Optional)
 
-8. **Upgrade pip**:
+5. **Upgrade pip**:
    - It's a good practice to keep pip updated:
      ```bash
      python -m pip install --upgrade pip
